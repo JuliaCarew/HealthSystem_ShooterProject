@@ -8,7 +8,7 @@ public class Actor : MonoBehaviour
     public float speed = 10.0f;
     public Transform visual;
 
-    public HealthSystem healthSystem = new HealthSystem();
+    public HealthSystem healthSystem = new HealthSystem(100);
     public Projectile prefabProjectile;
 
     int lastCheckingForDeath = 0;
