@@ -1,17 +1,28 @@
 using System;
+using UnityEngine;
+//using UnityEngine.UI;
+
 public class HealthSystem
 {
     // Variables
+    //[SerializeField] TextMeshProUGUI GameOverText;
+    //[SerializeField] GameObject GameOverTextObject;
+    //GameOverTextObject.SetActive(false);
     public int health;
     public int healthMax = 100;
     public string healthStatus;
-    //public int shield;
+    public bool shieldActive;
     public int shield = 100;
     public int lives = 3;
 
     // Optional XP system variables
     public int xp;
     public int level;
+
+    public void Awake()
+    {
+        HealthSystem.RunAllUnitTests();
+    }
 
     public HealthSystem()
     {
@@ -51,19 +62,27 @@ public class HealthSystem
     {
         //Handle damage to shield and health
         //when shield reaches 0, take dmg to health
-        shield -= damage;
-        if (shield < 0) shield = 0;
-        //once you lose all shield
-        if (shield == 0)
+        if (shield < 0) shield = 0;       
+        
+        if (shield > 0)
         {
+            shieldActive = true;
+            shield -= damage;
+        }
+        else
+        {
+            shieldActive = false;
+
             health -= damage;
-            if (health < 0) health = 0;
+            if (health < 0)
+            {
+                health = 0;
+            }
             if (health == 0)
             {
-                //show 'gameover' screen
                 Revive();
             }
-        }    
+        }
     }
     public void Heal(int hp)
     {
@@ -77,16 +96,16 @@ public class HealthSystem
     }
     public void Revive()
     {
-        //Reset health and shield, use one life, respawn player
-        //gameObject.SetActive(true); *reference Player here
+        var originPosition = Player.instance.transform.position + Vector3.up * 0.5f;
+        //need to despawn all current enemies
         shield = 100;
-        healthMax = 100;
+        health = 100;
         lives--;
+        if (lives < 0) lives = 0;
     }
-
     public void ResetGame()
     {
-        // Reset all variables to default values
+        //GameOverTextObject.SetActive(true);
         Revive();
         lives = 3;
     }
@@ -96,8 +115,142 @@ public class HealthSystem
     {
         // Implement XP increase and level-up logic
     }
+
+    // !!TESTS!! //
+    public static void RunAllUnitTests()
+    {
+        Test_TakeDamage_ShieldOnly();
+    }
+    public static void Test_TakeDamage_ShieldOnly()
+    {
+        HealthSystem system = new HealthSystem();
+
+        system.TakeDamage(10);
+
+        Debug.Assert(system.shield == 90, " TEST TakeDamage_ShieldOnly Failed");
+    }
+    public void Test_TakeDamage_ShieldAndHealth()
+    {
+        HealthSystem system = new HealthSystem();
+        system.shield = 100;
+        system.health = 100;
+
+        system.TakeDamage(20); //deplete shield first?
+
+        Debug.Assert(90 == system.shield);
+        Debug.Assert(90 == system.health);
+    }
+    public void Test_TakeDamage_HealthOnly()
+    {
+        HealthSystem system = new HealthSystem();
+        system.shield = 100;
+        system.health = 100;
+
+        system.TakeDamage(110);
+
+        Debug.Assert(0 == system.shield);
+        Debug.Assert(90 == system.health);
+    }
+    public void Test_TakeDamage_HealthDepleted()
+    {
+        HealthSystem system = new HealthSystem();
+        system.shield = 100;
+        system.health = 100;
+        shieldActive = false;
+
+        system.TakeDamage(100);
+
+        Debug.Assert(100 == system.shield);
+        Debug.Assert(0 == system.health);
+    }
+    public void Test_TakeDamage_HealthAndShieldDepleted()
+    {
+        HealthSystem system = new HealthSystem();
+        system.shield = 100;
+        system.health = 100;
+
+        system.TakeDamage(200);
+
+        Debug.Assert(0 == system.shield);
+        Debug.Assert(0 == system.health);
+    }
+    public void Test_TakeDamage_NegativeInput()
+    {
+        HealthSystem system = new HealthSystem();
+        system.shield = 100;
+        system.health = 100;
+
+        system.TakeDamage(-10);
+
+        Debug.Assert(100 == system.shield);
+        Debug.Assert(100 == system.health);
+    }
+    public void Test_Heal_Normal()
+    {
+        HealthSystem system = new HealthSystem();
+        system.health = 90;
+
+        system.Heal(10);
+
+        Debug.Assert(100 == system.health);
+    }
+    public void Test_Heal_MaxHealth()
+    {
+        HealthSystem system = new HealthSystem();
+        system.health = 100;
+
+        system.Heal(10);
+
+        Debug.Assert(100 == system.health);
+    }
+    public void Test_Heal_NegativeInput()
+    {
+        HealthSystem system = new HealthSystem();
+        system.health = 100;
+
+        system.Heal(-10);
+
+        Debug.Assert(90 == system.health);
+    }
+    public void Test_RegenerateShield_Normal()
+    {
+        HealthSystem system = new HealthSystem();
+        system.shield = 90;
+
+        system.RegenerateShield(10);
+
+        Debug.Assert(100 == system.shield);
+    }
+    public void Test_RegenerateShield_Max()
+    {
+        HealthSystem system = new HealthSystem();
+        system.shield = 100;
+
+        system.RegenerateShield(10);
+
+        Debug.Assert(100 == system.shield);
+    }
+    public void Test_RegenerateShield_Negative()
+    {
+        HealthSystem system = new HealthSystem();
+        system.shield = 100;
+
+        system.RegenerateShield(-10);
+
+        Debug.Assert(90 == system.shield);
+    }
+    public void Test_Revive()
+    {
+        HealthSystem system = new HealthSystem();
+        system.shield = 100;
+        system.health = 100;
+        system.lives = 3;
+
+        system.Revive();
+
+        Debug.Assert(100 == system.shield);
+        Debug.Assert(100 == system.health);
+        Debug.Assert(2 == system.lives);
+    }
 }
-//player script add last checked shield so it doesnt regen at the wrong time
-//take dmg from shield first, then health
-//shield pick ups not working or not displaying
 //shield doesnt show dmg until it reaches 0
