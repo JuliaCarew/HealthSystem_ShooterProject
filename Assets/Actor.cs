@@ -12,6 +12,8 @@ public class Actor : MonoBehaviour
     public Projectile prefabProjectile;
 
     int lastCheckingForDeath = 0;
+    int lastCheckingForShield = 0;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -40,10 +42,12 @@ public class Actor : MonoBehaviour
             ShootProjectile();
         }
 
-        if (healthSystem.health != lastCheckingForDeath)
+        if (healthSystem.health != lastCheckingForDeath && healthSystem.shield != lastCheckingForShield)
         {
             lastCheckingForDeath = healthSystem.health;
-            if (healthSystem.health <= 0)
+            lastCheckingForShield = healthSystem.shield;
+
+            if (healthSystem.health <= 0 && healthSystem.shield <= 0)
             {
                 Die();
             }

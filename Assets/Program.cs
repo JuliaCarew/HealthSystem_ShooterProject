@@ -1,17 +1,12 @@
 using System;
 using UnityEngine;
-//using UnityEngine.UI;
 
 public class HealthSystem
 {
-    // Variables
-    //[SerializeField] TextMeshProUGUI GameOverText;
-    //[SerializeField] GameObject GameOverTextObject;
-    //GameOverTextObject.SetActive(false);
+    // Variables    
     public int health;
     public int healthMax = 100;
     public string healthStatus;
-    public bool shieldActive;
     public int shield = 100;
     public int lives = 3;
 
@@ -21,7 +16,7 @@ public class HealthSystem
 
     public void Awake()
     {
-        HealthSystem.RunAllUnitTests();
+        RunAllUnitTests();
     }
 
     public HealthSystem()
@@ -61,24 +56,20 @@ public class HealthSystem
     public void TakeDamage(int damage)
     {
         //Handle damage to shield and health
-        //when shield reaches 0, take dmg to health
         if (shield < 0) shield = 0;       
         
         if (shield > 0)
         {
-            shieldActive = true;
             shield -= damage;
         }
-        else
+        else if (shield <= 0)
         {
-            shieldActive = false;
-
             health -= damage;
             if (health < 0)
             {
                 health = 0;
             }
-            if (health == 0)
+            if (health == 0 && shield == 0)
             {
                 Revive();
             }
@@ -97,160 +88,159 @@ public class HealthSystem
     public void Revive()
     {
         var originPosition = Player.instance.transform.position + Vector3.up * 0.5f;
-        //need to despawn all current enemies
+
         shield = 100;
         health = 100;
         lives--;
-        if (lives < 0) lives = 0;
+        if (lives < 0) lives = 0;     
     }
     public void ResetGame()
     {
-        //GameOverTextObject.SetActive(true);
-        Revive();
-        lives = 3;
+        if (lives == 0)
+        {
+            Time.timeScale = 0;
+
+            Revive();
+            lives = 3;
+        }
+        
     }
 
     // Optional XP system methods
     public void IncreaseXP(int exp)
     {
         // Implement XP increase and level-up logic
-    }
+    }   
+    
+        public static void RunAllUnitTests()
+        {
+            Test_TakeDamage_ShieldOnly();
+            Test_TakeDamage_ShieldAndHealth();
+            Test_TakeDamage_HealthOnly();
+            Test_TakeDamage_HealthDepleted();
+            Test_TakeDamage_HealthAndShieldDepleted();
+            Test_TakeDamage_NegativeInput();
+            Test_Heal_Normal();
+            Test_Heal_MaxHealth();
+            Test_Heal_NegativeInput();
+            Test_RegenerateShield_Normal();
+            Test_RegenerateShield_Max();
+            Test_RegenerateShield_Negative();
+            Test_Revive();
+        }
+        public static void Test_TakeDamage_ShieldOnly()
+        {
+            HealthSystem system = new HealthSystem();
 
-    // !!TESTS!! //
-    public static void RunAllUnitTests()
-    {
-        Test_TakeDamage_ShieldOnly();
-    }
-    public static void Test_TakeDamage_ShieldOnly()
-    {
-        HealthSystem system = new HealthSystem();
+            system.TakeDamage(10);
 
-        system.TakeDamage(10);
+            Debug.Assert(system.shield == 90, " TEST TakeDamage_ShieldOnly Failed");
+        }
+        public static void Test_TakeDamage_ShieldAndHealth()
+        {
+            HealthSystem system = new HealthSystem();
 
-        Debug.Assert(system.shield == 90, " TEST TakeDamage_ShieldOnly Failed");
-    }
-    public void Test_TakeDamage_ShieldAndHealth()
-    {
-        HealthSystem system = new HealthSystem();
-        system.shield = 100;
-        system.health = 100;
+            system.TakeDamage(110);
 
-        system.TakeDamage(20); //deplete shield first?
+            Debug.Assert(0 == system.shield, " TEST TakeDamage_ShieldAndHealth Failed");
+            Debug.Assert(90 == system.health, " TEST TakeDamage_ShieldAndHealth Failed");
+        }
+        public static void Test_TakeDamage_HealthOnly()
+        {
+            HealthSystem system = new HealthSystem();
+            system.shield = 0;
 
-        Debug.Assert(90 == system.shield);
-        Debug.Assert(90 == system.health);
-    }
-    public void Test_TakeDamage_HealthOnly()
-    {
-        HealthSystem system = new HealthSystem();
-        system.shield = 100;
-        system.health = 100;
+            system.TakeDamage(10);
 
-        system.TakeDamage(110);
+            Debug.Assert(0 == system.shield, " TEST TakeDamage_HealthOnly Failed");
+            Debug.Assert(90 == system.health, " TEST TakeDamage_HealthOnly Failed");
+        }
+        public static void Test_TakeDamage_HealthDepleted()
+        {
+            HealthSystem system = new HealthSystem();
+            system.shield = 0;
 
-        Debug.Assert(0 == system.shield);
-        Debug.Assert(90 == system.health);
-    }
-    public void Test_TakeDamage_HealthDepleted()
-    {
-        HealthSystem system = new HealthSystem();
-        system.shield = 100;
-        system.health = 100;
-        shieldActive = false;
+            system.TakeDamage(100);
 
-        system.TakeDamage(100);
+            Debug.Assert(0 == system.shield, " TEST TakeDamage_HealthDepleted Failed");
+            Debug.Assert(0 == system.health, " TEST TakeDamage_HealthDepleted Failed");
+        }
+        public static void Test_TakeDamage_HealthAndShieldDepleted()
+        {
+            HealthSystem system = new HealthSystem();
 
-        Debug.Assert(100 == system.shield);
-        Debug.Assert(0 == system.health);
-    }
-    public void Test_TakeDamage_HealthAndShieldDepleted()
-    {
-        HealthSystem system = new HealthSystem();
-        system.shield = 100;
-        system.health = 100;
+            system.TakeDamage(200);
 
-        system.TakeDamage(200);
+            Debug.Assert(0 == system.shield, " TEST TakeDamage_HealthAndShieldDepleted Failed");
+            Debug.Assert(0 == system.health, " TEST TakeDamage_HealthAndShieldDepleted Failed");
+        }
+        public static void Test_TakeDamage_NegativeInput()
+        {
+            HealthSystem system = new HealthSystem();
 
-        Debug.Assert(0 == system.shield);
-        Debug.Assert(0 == system.health);
-    }
-    public void Test_TakeDamage_NegativeInput()
-    {
-        HealthSystem system = new HealthSystem();
-        system.shield = 100;
-        system.health = 100;
+            system.TakeDamage(-10);
 
-        system.TakeDamage(-10);
+            Debug.Assert(100 == system.shield, " TEST TakeDamage_NegativeInput Failed");
+            Debug.Assert(100 == system.health, " TEST TakeDamage_NegativeInput Failed");
+        }
+        public static void Test_Heal_Normal()
+        {
+            HealthSystem system = new HealthSystem();
+            system.health = 90;
 
-        Debug.Assert(100 == system.shield);
-        Debug.Assert(100 == system.health);
-    }
-    public void Test_Heal_Normal()
-    {
-        HealthSystem system = new HealthSystem();
-        system.health = 90;
+            system.Heal(10);
 
-        system.Heal(10);
+            Debug.Assert(100 == system.health, " TEST Heal_Normal Failed");
+        }
+        public static void Test_Heal_MaxHealth()
+        {
+            HealthSystem system = new HealthSystem();
 
-        Debug.Assert(100 == system.health);
-    }
-    public void Test_Heal_MaxHealth()
-    {
-        HealthSystem system = new HealthSystem();
-        system.health = 100;
+            system.Heal(10);
 
-        system.Heal(10);
+            Debug.Assert(100 == system.health, " TEST Heal_MaxHealth Failed");
+        }
+        public static void Test_Heal_NegativeInput()
+        {
+            HealthSystem system = new HealthSystem();
 
-        Debug.Assert(100 == system.health);
-    }
-    public void Test_Heal_NegativeInput()
-    {
-        HealthSystem system = new HealthSystem();
-        system.health = 100;
+            system.Heal(-10);
 
-        system.Heal(-10);
+            Debug.Assert(100 == system.health, " TEST Heal_NegativeInput Failed");
+        }
+        public static void Test_RegenerateShield_Normal()
+        {
+            HealthSystem system = new HealthSystem();
+            system.shield = 90;
 
-        Debug.Assert(90 == system.health);
-    }
-    public void Test_RegenerateShield_Normal()
-    {
-        HealthSystem system = new HealthSystem();
-        system.shield = 90;
+            system.RegenerateShield(10);
 
-        system.RegenerateShield(10);
+            Debug.Assert(100 == system.shield, " TEST RegenerateShield_Normal Failed");
+        }
+        public static void Test_RegenerateShield_Max()
+        {
+            HealthSystem system = new HealthSystem();
 
-        Debug.Assert(100 == system.shield);
-    }
-    public void Test_RegenerateShield_Max()
-    {
-        HealthSystem system = new HealthSystem();
-        system.shield = 100;
+            system.RegenerateShield(10);
 
-        system.RegenerateShield(10);
+            Debug.Assert(100 == system.shield, " TEST RegenerateShield_Max Failed");
+        }
+        public static void Test_RegenerateShield_Negative()
+        {
+            HealthSystem system = new HealthSystem();
 
-        Debug.Assert(100 == system.shield);
-    }
-    public void Test_RegenerateShield_Negative()
-    {
-        HealthSystem system = new HealthSystem();
-        system.shield = 100;
+            system.RegenerateShield(-10);
 
-        system.RegenerateShield(-10);
+            Debug.Assert(100 == system.shield, " TEST RegenerateShield_Negative Failed");
+        }
+        public static void Test_Revive()
+        {
+            HealthSystem system = new HealthSystem();
 
-        Debug.Assert(90 == system.shield);
-    }
-    public void Test_Revive()
-    {
-        HealthSystem system = new HealthSystem();
-        system.shield = 100;
-        system.health = 100;
-        system.lives = 3;
+            system.Revive();
 
-        system.Revive();
-
-        Debug.Assert(100 == system.shield);
-        Debug.Assert(100 == system.health);
-        Debug.Assert(2 == system.lives);
-    }
+            Debug.Assert(100 == system.shield, " TEST Revive Failed");
+            Debug.Assert(100 == system.health, " TEST Revive Failed");
+            Debug.Assert(2 == system.lives, " TEST Revive Failed");
+        }      
 }
-//shield doesnt show dmg until it reaches 0
