@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class mouseReticle : MonoBehaviour {
+
     public static mouseReticle instance;
 
     Camera cameraRef;
